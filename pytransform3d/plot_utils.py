@@ -750,7 +750,7 @@ try:
                 "Cannot display mesh. Library 'trimesh' not installed.")
             return ax
 
-        mesh = trimesh.load(filename)
+        mesh = trimesh.load(filename, force='mesh')
         if convex_hull:
             mesh = mesh.convex_hull
         vertices = mesh.vertices * s

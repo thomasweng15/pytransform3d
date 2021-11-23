@@ -6,6 +6,7 @@ import warnings
 import math
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+import traceback
 
 unitx = np.array([1.0, 0.0, 0.0])
 unity = np.array([0.0, 1.0, 0.0])
@@ -2031,7 +2032,13 @@ def axis_angle_from_matrix(R, strict_check=True):
         constrained to [0, pi].
     """
     R = check_matrix(R, strict_check=strict_check)
-    angle = np.arccos((np.trace(R) - 1.0) / 2.0)
+    traceR = 3 if np.isclose(np.trace(R), 3.0) else np.trace(R)
+    traceR = -1 if np.isclose(traceR, -1.0) else traceR
+    try:
+        angle = np.arccos((traceR - 1.0) / 2.0)
+    except Exception as e:
+        print(traceback.format_exc())
+        import IPython; IPython.embed()
 
     if angle == 0.0:  # R == np.eye(3)
         return np.array([1.0, 0.0, 0.0, 0.0])
@@ -2054,7 +2061,14 @@ def axis_angle_from_matrix(R, strict_check=True):
         # squared values of the rotation axis on the diagonal of this matrix.
         # We can still use the original formula to reconstruct the signs of
         # the rotation axis correctly.
-        a[:3] = np.sqrt(0.5 * (np.diag(R) + 1.0)) * np.sign(axis_unnormalized)
+        try:
+            eeT = 0.5 * (np.diag(R) + 1.0)
+            # eeT[np.abs(eeT) < np.finfo(np.float).eps] = 0 # round small values close to zero
+            eeT[np.abs(eeT) < 1e-4] = 0 # round small values close to zero
+            a[:3] = np.sqrt(eeT) * np.sign(axis_unnormalized)
+        except Exception as e:
+            print(traceback.format_exc())
+            import IPython; IPython.embed()
     else:
         a[:3] = axis_unnormalized
         # The norm of axis_unnormalized is 2.0 * np.sin(angle), that is, we
